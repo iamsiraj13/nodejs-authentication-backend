@@ -1,9 +1,32 @@
 const express = require("express");
 const app = express();
-const port = 3000;
+const dotenv = require("dotenv");
+const { PORT, FRONTEND_HOST } = require("./env");
+const cors = require("cors");
+const cookieParser = require("cookie-parser");
+const connectdb = require("./config/connectDB");
 
-app.get("/", (req, res) => res.send("Hello World!"));
+// init
+dotenv.config();
 
-app.listen(port, () => {
-  console.log(`Example app listening on port ${port}!`);
+app.use(cookieParser());
+
+const corsOption = {
+  origin: FRONTEND_HOST,
+  credentials: true,
+  optionSuccessStatus: true,
+};
+
+app.use(cors(corsOption));
+connectdb();
+
+app.get("/health", (req, res) =>
+  res.json({
+    success: true,
+    message: "Ok",
+  })
+);
+
+app.listen(PORT, () => {
+  console.log(`Example app listening on port ${PORT}!`);
 });
