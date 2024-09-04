@@ -1,40 +1,37 @@
 const userModel = require("../models/user.model");
 const bcrypt = require("bcrypt");
+
 // User Registration
 
 const userRegistration = async (req, res) => {
   try {
+    // extract users info from req.body
     const { name, email, password, password_confirmation } = req.body;
-    // check if all field are required
-
-    if ((!name || !email || !password, !password_confirmation)) {
+    // Check all fields are required
+    if (!email || !name || !password || !password_confirmation) {
       return res.status(400).json({
         status: "Failed",
         message: "All fields are required",
       });
     }
-
-    // check is password and confirm password match
-
+    // Check if password and password_confirmation match
     if (password !== password_confirmation) {
       return res.status(400).json({
         status: "Failed",
-        message: "Password didn't match",
+        message: "Password doesn't match",
       });
     }
-
-    // check if email already exist
+    // Check if user exist or not
     const existingUser = await userModel.find({ email });
-    if (!existingUser) {
+    if (existingUser) {
       return res.status(404).json({
         status: "Failed",
-        message: "User not found",
+        message: "Email already exist",
       });
     }
+    // Generate hash password
 
-    // generate salt and hash password
     const salt = await bcrypt.genSalt(Number(10));
-
     const hashedPassword = await bcrypt.hash(password, salt);
 
     // Create new user
@@ -44,17 +41,14 @@ const userRegistration = async (req, res) => {
       email,
       password: hashedPassword,
     });
+
     await newUser.save();
 
-    // Send success response
-
-    res.status(201).json({
+    // Send Success Message
+    res.status(404).json({
       status: "Success",
-      message: "Registration Success",
-      user: {
-        id: newUser._id,
-        email: newUser.email,
-      },
+      message: "User registraion success",
+      user: newUser,
     });
   } catch (error) {
     console.log(error);
@@ -64,18 +58,19 @@ const userRegistration = async (req, res) => {
     });
   }
 };
-// User Email Verification
+
+// User Email verification
 
 // User Login
 
-// Get New Access Token OR Refresh Token
+// Access token and refresh token
 
 // Change Password
 
-// Profile Or LoggedIn
+// User login or profile
 
-// Send Password Reset Email
+// Send reset password email
 
-// Logout
+// User logout
 
 module.exports = { userRegistration };
