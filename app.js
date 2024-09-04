@@ -5,6 +5,7 @@ const { PORT, FRONTEND_HOST } = require("./env");
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
 const connectdb = require("./config/connectDB");
+const userRouter = require("./routes/user.routes");
 
 // init
 dotenv.config();
@@ -16,9 +17,12 @@ const corsOption = {
   credentials: true,
   optionSuccessStatus: true,
 };
-
+app.use(express.json());
 app.use(cors(corsOption));
 connectdb();
+
+// apis
+app.use("/api/user", userRouter);
 
 app.get("/health", (req, res) =>
   res.json({
