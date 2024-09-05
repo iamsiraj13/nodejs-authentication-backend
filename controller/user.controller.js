@@ -1,6 +1,7 @@
 const userModel = require("../models/user.model");
 const bcrypt = require("bcrypt");
 const sendEmailOtp = require("../utils/sendEmailOtp");
+const otpModel = require("../models/otpModel");
 
 // User Registration
 
@@ -66,7 +67,84 @@ const userRegistration = async (req, res) => {
 };
 
 // User Email verification
+const verifyEmail = async (req, res) => {
+  try {
+    // Extract request body parameters
+    const { otp, email } = req.body;
 
+    // Check if all required fields are provided
+
+    if (!otp || !email) {
+      return res.status(500).json({
+        status: "Failed",
+        message: "All fields are required !",
+      });
+    }
+
+    // Check if email doesn't exist
+    const existingUser = await userModel.findOne({ email });
+    if (!existingUser) {
+      return res.status(404).json({
+        status: "Failed",
+        message: "User not foud with this email",
+      });
+    }
+    // Check if email is already verified or not
+    if (existingUser.is_verified) {
+      return res.status(400).json({
+        status: "Failed",
+        message: "Email is already verified",
+      });
+    }
+
+    // Check if there is a matching email verification otp
+
+    const validOtp = await otpModel.findOne({ userId: existingUser._id, otp });
+    if (!validOtp) {
+      if (!existingUser.is_verified) {
+        await sendEmailOtp(existingUser);
+        return res.status(400).json({
+          status: "Failed",
+          message: "Invalid OTP, new OTP sent to your email",
+        });
+      }
+
+      return res.status(400).json({
+        status: "Failed",
+        message: "Invalid OTP",
+      });
+    }
+
+    // Check if OTP is expired
+    const currentTime = new Date();
+    const expireTime = new Date(validOtp.createdAt.getTime() + 15 * 60 * 1000);
+
+    if (currentTime > expireTime) {
+      // OTP expired , send new OTP
+      await sendEmailOtp(existingUser);
+      return res.status(400).json({
+        status: "Failed",
+        message: "OTP expired, new OTP sent to your email",
+      });
+    }
+    // OTP is valid and not expired, mark email as verified
+    existingUser.is_verified = true;
+    await existingUser.save();
+
+    // Delete email verification document
+
+    await otpModel.deleteMany({ userId: existingUser._id });
+    res.status(200).json({
+      status: "Success",
+      message: "Email Verified Successfull",
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: "Failed",
+      message: "Unable to verify email, Please try again letter",
+    });
+  }
+};
 // User Login
 
 // Access token and refresh token
@@ -79,4 +157,4 @@ const userRegistration = async (req, res) => {
 
 // User logout
 
-module.exports = { userRegistration };
+module.exports = { userRegistration, verifyEmail };
