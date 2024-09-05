@@ -4,6 +4,10 @@ const PORT = process.env.PORT;
 const FRONTEND_HOST = process.env.FRONTEND_HOST;
 const DB_URL = process.env.DB_URL;
 
+// JWT
+const JWT_ACCESS_SECRET_KEY = process.env.JWT_ACCESS_SECRET_KEY;
+const JWT_REFRESH_SECRET_KEY = process.env.JWT_REFRESH_SECRET_KEY;
+
 // Email
 
 const EMAIL_HOST = process.env.EMAIL_HOST;
@@ -21,4 +25,6 @@ module.exports = {
   EMAIL_USER,
   EMAIL_PASSWORD,
   EMAIL_FROM,
+  JWT_REFRESH_SECRET_KEY,
+  JWT_ACCESS_SECRET_KEY,
 };

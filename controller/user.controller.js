@@ -2,6 +2,8 @@ const userModel = require("../models/user.model");
 const bcrypt = require("bcrypt");
 const sendEmailOtp = require("../utils/sendEmailOtp");
 const otpModel = require("../models/otpModel");
+const genToken = require("../utils/genToken");
+const setCookieToken = require("../utils/setCookiesToken");
 
 // User Registration
 
@@ -147,6 +149,81 @@ const verifyEmail = async (req, res) => {
 };
 // User Login
 
+const userLogin = async (req, res) => {
+  try {
+    // Extract request body parametters
+    const { email, password } = req.body;
+
+    // Check all required fields are provided
+    if (!email || !password) {
+      res.status(400).json({
+        status: "Failed",
+        message: "All fields are required",
+      });
+    }
+    // Check if user exists
+    const user = await userModel.findOne({ email });
+    if (!user) {
+      res.status(404).json({
+        status: "Failed",
+        message: "User not found",
+      });
+    }
+    // Check if user is verified
+    if (!user.is_verified) {
+      res.status(400).json({
+        status: "Failed",
+        message: "Your account is not verified",
+      });
+    }
+
+    // Compare password / Check password
+
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      res.status(401).json({
+        status: "Failed",
+        message: "Invalid email or password",
+      });
+    }
+
+    // Generate tokens
+
+    const { accessToken, refreshToken, accessTokenExp, refreshTokenExp } =
+      await genToken(user);
+
+    // set cookies
+
+    setCookieToken(
+      res,
+      accessToken,
+      refreshToken,
+      accessTokenExp,
+      refreshTokenExp
+    );
+
+    // send success response with tokens
+    res.status(200).json({
+      status: "Success",
+      message: "Login Successfull",
+      user: {
+        id: user._id,
+        email: user.email,
+        name: user.name,
+        roles: user.roles[0],
+      },
+      access_token: accessToken,
+      refresh_token: refreshToken,
+      access_token_exp: accessTokenExp,
+      is_auth: true,
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: "Failed",
+      message: "Unable to login, Please try again letter",
+    });
+  }
+};
 // Access token and refresh token
 
 // Change Password
@@ -157,4 +234,4 @@ const verifyEmail = async (req, res) => {
 
 // User logout
 
-module.exports = { userRegistration, verifyEmail };
+module.exports = { userRegistration, verifyEmail, userLogin };
