@@ -13,7 +13,7 @@ dotenv.config();
 app.use(cookieParser());
 
 const corsOption = {
-  origin: FRONTEND_HOST,
+  origin: "*",
   credentials: true,
   optionSuccessStatus: true,
 };

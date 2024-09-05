@@ -156,7 +156,7 @@ const userLogin = async (req, res) => {
 
     // Check all required fields are provided
     if (!email || !password) {
-      res.status(400).json({
+      return res.status(400).json({
         status: "Failed",
         message: "All fields are required",
       });
@@ -164,14 +164,14 @@ const userLogin = async (req, res) => {
     // Check if user exists
     const user = await userModel.findOne({ email });
     if (!user) {
-      res.status(404).json({
+      return res.status(404).json({
         status: "Failed",
         message: "User not found",
       });
     }
     // Check if user is verified
     if (!user.is_verified) {
-      res.status(400).json({
+      return res.status(400).json({
         status: "Failed",
         message: "Your account is not verified",
       });
@@ -181,7 +181,7 @@ const userLogin = async (req, res) => {
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      res.status(401).json({
+      return res.status(401).json({
         status: "Failed",
         message: "Invalid email or password",
       });
@@ -193,7 +193,6 @@ const userLogin = async (req, res) => {
       await genToken(user);
 
     // set cookies
-
     setCookieToken(
       res,
       accessToken,

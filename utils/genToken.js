@@ -10,27 +10,31 @@ const genToken = async (user) => {
 
     const accessTokenExp = Math.floor(Date.now() / 1000) + 100; // Set expiration to 100 secons from now
 
-    const accessToken = jwt.sign({
-      ...payload,
-      exp: accessTokenExp,
-      JWT_ACCESS_SECRET_KEY,
-    });
+    const accessToken = jwt.sign(
+      {
+        ...payload,
+        exp: accessTokenExp,
+      },
+      JWT_ACCESS_SECRET_KEY
+    );
 
     // Generate refresh token with expiration time
     const refreshTokenExp = Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 5; // Set expiration to 5 days from now
 
-    const refreshToken = jwt.sign({
-      ...payload,
-      exp: refreshTokenExp,
-      JWT_REFRESH_SECRET_KEY,
-    });
+    const refreshToken = jwt.sign(
+      {
+        ...payload,
+        exp: refreshTokenExp,
+      },
+      JWT_REFRESH_SECRET_KEY
+    );
 
     const userRefreshToken = await refreshTokenModel.findOne({
       userId: user._id,
     });
 
     if (userRefreshToken) {
-      await userRefreshToken.remove();
+      await refreshTokenModel.deleteOne({ _id: userRefreshToken._id });
     }
 
     // Save new Refresh token
@@ -39,14 +43,14 @@ const genToken = async (user) => {
       token: refreshToken,
     }).save();
 
-    return Promise.resolve({
+    return {
       accessToken,
       refreshToken,
       accessTokenExp,
       refreshTokenExp,
-    });
+    };
   } catch (error) {
-    return Promise.reject(error);
+    throw error;
   }
 };
 
