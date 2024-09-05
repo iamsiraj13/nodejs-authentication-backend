@@ -1,5 +1,6 @@
 const userModel = require("../models/user.model");
 const bcrypt = require("bcrypt");
+const sendEmailOtp = require("../utils/sendEmailOtp");
 
 // User Registration
 
@@ -22,7 +23,7 @@ const userRegistration = async (req, res) => {
       });
     }
     // Check if user exist or not
-    const existingUser = await userModel.find({ email });
+    const existingUser = await userModel.findOne({ email });
     if (existingUser) {
       return res.status(404).json({
         status: "Failed",
@@ -43,12 +44,17 @@ const userRegistration = async (req, res) => {
     });
 
     await newUser.save();
+    // send mail
 
+    sendEmailOtp(newUser);
     // Send Success Message
-    res.status(404).json({
+    res.status(201).json({
       status: "Success",
       message: "User registraion success",
-      user: newUser,
+      user: {
+        id: newUser._id,
+        email: newUser.email,
+      },
     });
   } catch (error) {
     console.log(error);
